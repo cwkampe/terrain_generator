@@ -11,11 +11,14 @@ public class RPG_Maker_Entry {
 	
 	//Constructors
 	RPG_Maker_Entry() {}
+	
 	RPG_Maker_Entry(String n,boolean b) {type = 'b'; bValue = b;}
 	RPG_Maker_Entry(String n, String s) {type = 's'; sValue = s;}
 	RPG_Maker_Entry(String n, int i) {type = 'i'; iValue = i;}
 	
 	//Functions
+	void initialize() {type = '0'; bValue = false; sValue = ""; iValue = 0;}
+	
 	void set_value(boolean b, String n) { bValue = b; type = 'b'; name = n;}
 	void set_value(String s, String n) { sValue = s; type = 's'; name = n;}
 	void set_value(int i, String n) { iValue = i; type = 'i'; name = n; }
