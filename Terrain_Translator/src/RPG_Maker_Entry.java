@@ -50,7 +50,7 @@ public class RPG_Maker_Entry {
 			//flag error
 			break;
 		}
-		}
+	}
 
 	
 }

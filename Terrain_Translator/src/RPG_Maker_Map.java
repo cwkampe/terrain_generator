@@ -62,7 +62,7 @@ public class RPG_Maker_Map {
 			writer.print("],\n\"events\":[\n]\n}");
 			writer.close();
 		} catch (IOException e) {
-			//we got a problem
+			//we got a problem; hasn't come up
 		}
 		
 	}
