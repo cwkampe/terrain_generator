@@ -128,7 +128,8 @@ public class RPG_Maker_Map {
 		else return false;
 	}
 	
-	//this gets the autotile value ; it may have a wrap effect in place? 
+	//this gets the autotile value ; it may have a wrap effect in place?
+	//THIS WILL NOT WORK WITH C TILES (any non auto-tile)
 	int get_auto_tile_value (int base, int index, char[] terrain) {
 		
 		if (terrain[index] == '0') {return 0;}
