@@ -14,7 +14,7 @@ public class RPG_Maker_Map {
 	int map_height = 10;
 	int map_area = map_width * map_height;
 	int map_tileset_ID = 1;
-	int temp_set_height = 0;
+	int temp_set_length = 0;
 	int temp_set_width = 0;
 	
 	
@@ -52,14 +52,14 @@ public class RPG_Maker_Map {
 			char[] terrain_map = make_test_map(0);//load input values
 			map_values = make_int_map(map_width, map_height);
 			
-			//add ground to map_values
+			//add ground to map_values (LEVEL 0)
 			for (int i = 0; i < map_area; i++) {
 				//Convert char to integer value
 				map_values[i] = get_auto_tile_value(convert_letter_to_code(terrain_map[i]), i, terrain_map); 
 				map_values[i] = convert_letter_to_code(terrain_map[i]);
 			}
 			
-			//get map values (give 1 of trees)
+			//get map values (give 1 of trees) (LEVEL 1)
 			terrain_map = flush_map(terrain_map);
 			terrain_map = make_test_map(1);
 			//add level level 1 above ground to map_values
@@ -67,13 +67,15 @@ public class RPG_Maker_Map {
 				map_values[i+map_area] = get_auto_tile_value(convert_letter_to_code(terrain_map[i]), i, terrain_map);
 			}
 			
-			//get map values (2: of structures)
+			//get map values (2: of structures) (LEVEL 2)
 			terrain_map = flush_map(terrain_map);
 			terrain_map = make_test_map(2);
 			//add level level 1 above ground to map_values
 			for (int i = 0; i < map_area; i++){
 				if (map_values[i+map_area*2] == 0) {
-					map_values[i+map_area*2] = get_set_value(convert_letter_to_code(terrain_map[i]), i+map_area*2);
+					if (convert_letter_to_code(terrain_map[i]) != 0) {
+					place_set_value(convert_letter_to_code(terrain_map[i]), i+map_area*2);
+					}
 				}
 			}
 			
@@ -91,37 +93,18 @@ public class RPG_Maker_Map {
 	}
 	
 	
-	/* a set behaves in a really predictable manner, to include a horizontal member x+1, vertical member y+1 
-	 * in a 1D array, an increase in y +1 = index + map_width
-	 * this function should fill out all of the map tiles associated with a set when the first member is called*/
-	int get_set_value( int base, int index){
-		for (int i = 0; i >= i + temp_set_width; i++) {
-			if (i+index < map_values.length) {map_values[i+index] = base + i;}
-			
-			/* this doesn't work and the problem is right here -- I think. 
-			 * What this should be doing is completing set placement:
-			 * after the first value is called the rest are filled out. 
-			 * Either that's not happening or something is writing over it.
-			 */
-			for (int j = 1; j >= temp_set_height +1; j++) {
-					map_values[i+index+(j*map_width)] = base + i + SET_ROW_LENGTH;
-			} 
-			//add a SAFETY -- this could write outside where it's supposed to (bottom row).
-			//alternatively, you could purge the space for the other objects? 
-		}
-		
-		return base;
-	}
+	/*THIS FELLOW ASSIGNS CODE NUMBERS TO LETTER VALUES*/
 	
 	int convert_letter_to_code(char x){
 		if (x == 'w') {return 2048;}
 		if (x == 'g') {return 2816;}
 		if (x == 't') {return 3008;}
-		if (x == '!') {temp_set_width = 1; temp_set_height = 2; return 112;}
-		if (x == '!') {temp_set_width = 1; temp_set_height = 2; return 113;}
+		if (x == '!') {temp_set_width = 1; temp_set_length = 2; return 112;}
+		if (x == 'c') {temp_set_width = 2; temp_set_length = 2; return 128;}
 		else return 0; 
 	}
 	
+	/* THIS FELLOW MAKES THE TEST MAPS*/
 	
 	char[] make_test_map (int c) {
 		
@@ -130,8 +113,8 @@ public class RPG_Maker_Map {
 		case 2:
 			for (int i = 0; i < map_area; i++) {
 				testMap[i] = '0';
-				if (i%(map_width -2) == 0) {testMap[i] = '!';}
-				//else if (i%(map_width -4) == 0) {testMap[i] = '&';}
+				if (i%(map_width -1) == 0) {testMap[i] = '!';}
+				if (i%(map_height*map_width/2) == 0) {testMap[i] = 'c';}
 				}
 			break;
 		case 1: 
@@ -149,6 +132,39 @@ public class RPG_Maker_Map {
 			break;
 		}
 		return testMap;
+	}
+	
+	/* a set behaves in a really predictable manner, to include a horizontal member x+1, vertical member y+1 
+	 * This function creates a full set of tiles (as determine by set) in  a given map location.
+	 * This function employs build_set()
+	 * THIS IS UNIQUE TO LEVEL 2*/
+	void place_set_value( int base, int index){
+		
+		int[][] temp_set = build_set( temp_set_width, temp_set_length, base);
+		int temp_index = 0;
+		
+		for (int i = 0; i < temp_set_width; i++) {
+			for (int j = 0; j < temp_set_length; j++) {
+				temp_index = index + i + (j*map_width);
+				
+				//Prevents it from writing out of bounds UNIQUE TO LEVEL 2 ( hence "/3") 
+				if (temp_index/3 < map_width*map_height) {
+					map_values[temp_index] = temp_set[i][j];
+				}
+			}
+		}
+	}
+	
+	int [][] build_set (int set_width, int set_length, int set_base) {
+		int [][] set = new int [set_width][set_length];
+		for (int i = 0; i < set_width; i++) {
+			for (int j = 0; j < set_length; j++) {
+				set[i][j] = set_base + i + (j * SET_ROW_LENGTH);
+			}
+		}
+		
+		return set;
+		
 	}
 	
 	int[] make_int_map(int width, int height){
