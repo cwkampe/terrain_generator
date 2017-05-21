@@ -1,39 +1,48 @@
 
 import java.io.PrintWriter;
 import java.io.IOException;
-import java.math.*;
 
 public class RPG_Maker_Map {
 	
+	//EDITABLE VARIABLES
+	int map_tileset_ID = 1;
+	String MapName = "Map010";
+	int map_width = 10;
+	int map_height = 10;
+	
+	//Temporary value holders
+	int[] map_values; //CORE
+	public static RPG_Maker_Entry[] entries; //CORE
+	int temp_set_length = 0; //used in order to hold active set values after lookup; passed to build_set() 
+	int temp_set_width = 0; //used in order to hold active set values after lookup; passed to build_set() 
+	int current_level = 0; //this value is used in place_set_tile; the value is manually changed prior to the function being called. 
+	
+	//CONSTANTS
 	int MAX_ENTRIES = 22;
 	int RPG_MAKER_DATA_ARRAY_NUM = 6;
 	int SET_ROW_LENGTH = 8;
-	
-	int[] map_values;
-	int map_width = 10;
-	int map_height = 10;
 	int map_area = map_width * map_height;
-	int map_tileset_ID = 1;
-	int temp_set_length = 0;
-	int temp_set_width = 0;
-	int current_level = 0; //this value is used in place_set_tile; the value is manually changed prior to the function being called. 
-	
-	
-	public static RPG_Maker_Entry[] entries;
-	String MapName = "Map010";
-	String MapExtension =".json";
-	
-	
+	String MapExtension =".json"; //probably never touch this
+ 
+	//constructor
 	RPG_Maker_Map() {}
 	
+	/*******************MAIN FUNCTION*********************
+	 * BLOATED AS HELL.
+	 */
 	void initialize() {
+		//creates entries for RPG Maker MapFile.json
 		entries = new RPG_Maker_Entry[MAX_ENTRIES];
 		for (int i = 0; i < MAX_ENTRIES; i++) {
 			entries[i] = new RPG_Maker_Entry();
 			entries[i].initialize();
 		}
+		
+		//apply default values to each entry
 		set_default_values();
 		String fileName = MapName + MapExtension;
+		
+		//start writing file
 		try{
 			PrintWriter writer = new PrintWriter(fileName, "UTF-8");
 			writer.print("{\n");
@@ -102,11 +111,12 @@ public class RPG_Maker_Map {
 		} catch (IOException e) {
 			//we got a problem; hasn't come up
 		}
-	}
+	} //if this ran correctly, a map.json file should be created
+	/*************END OF MAIN FUNCTION**********************/
 	
+	/*************CLASS FUNCTIONS**************************/
 	
 	/*THIS FELLOW ASSIGNS CODE NUMBERS TO LETTER VALUES*/
-	
 	int convert_letter_to_code(char x){
 		if (x == 'w') {return 2048;}
 		if (x == 'g') {return 2816;}
@@ -156,7 +166,7 @@ public class RPG_Maker_Map {
 	/* a set behaves in a really predictable manner, to include a horizontal member x+1, vertical member y+1 
 	 * This function creates a full set of tiles (as determine by set) in  a given map location.
 	 * This function employs build_set()
-	 * THIS IS UNIQUE TO LEVEL 2*/
+	 * NOTE this offsets current_level by +1 */
 	void place_set_value( int base, int index){
 		
 		int[][] temp_set = build_set( temp_set_width, temp_set_length, base);
@@ -166,7 +176,6 @@ public class RPG_Maker_Map {
 			for (int j = 0; j < temp_set_length; j++) {
 				temp_index = index + i + (j*map_width);
 				
-				//Prevents it from writing out of bounds UNIQUE TO LEVEL 2 ( hence "/3") 
 				if (temp_index/(current_level+1) < map_width*map_height) {
 					map_values[temp_index] = temp_set[i][j];
 				}
@@ -174,6 +183,7 @@ public class RPG_Maker_Map {
 		}
 	}
 	
+	//used by place_set_values; establishes the relative offset values associated with a set of tiles
 	int [][] build_set (int set_width, int set_length, int set_base) {
 		int [][] set = new int [set_width][set_length];
 		for (int i = 0; i < set_width; i++) {
@@ -181,11 +191,10 @@ public class RPG_Maker_Map {
 				set[i][j] = set_base + i + (j * SET_ROW_LENGTH);
 			}
 		}
-		
 		return set;
-		
 	}
 	
+	//used to make map_values (i.e. the map data)
 	int[] make_int_map(int width, int height){
 		int area = height * width * RPG_MAKER_DATA_ARRAY_NUM;
 		int[] map = new int [area];
@@ -195,6 +204,7 @@ public class RPG_Maker_Map {
 		return map;
 	}
 	
+	//clears any char[] handed to it; called before terrain_map is redrawn 
 	char[] flush_map(char[] map) {
 		char[] temp_map = new char[map.length];
 		for (int i = 0; i < map.length; i++ ) {
@@ -247,7 +257,6 @@ public class RPG_Maker_Map {
 		return (base + convert_offset(temp_offset));
 		
 	}
-	
 
 	//Converts the byte value into correct offset for autotile
 	int convert_offset(int v) {
@@ -284,7 +293,8 @@ public class RPG_Maker_Map {
 		else if ( v == 240) {return 46;}
 		else {return 0;}
 	}
-
+	
+	//takes a new value, looks up that values name, then replace the values in entries
 	void change_setting_value (RPG_Maker_Entry NewValue) {
 		for (int i = 0; i < MAX_ENTRIES; i++ ) {
 			if(NewValue.get_name() == entries[i].get_name()) {
