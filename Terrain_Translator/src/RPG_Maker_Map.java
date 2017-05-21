@@ -7,11 +7,15 @@ public class RPG_Maker_Map {
 	
 	int MAX_ENTRIES = 22;
 	int RPG_MAKER_DATA_ARRAY_NUM = 6;
+	int SET_ROW_LENGTH = 8;
 	
+	int[] map_values;
 	int map_width = 10;
 	int map_height = 10;
 	int map_area = map_width * map_height;
 	int map_tileset_ID = 1;
+	int temp_set_height = 0;
+	int temp_set_width = 0;
 	
 	
 	public static RPG_Maker_Entry[] entries;
@@ -46,13 +50,13 @@ public class RPG_Maker_Map {
 			
 			//get map values (give 0 for ground) 
 			char[] terrain_map = make_test_map(0);//load input values
-			int[] map_values = make_int_map(map_width, map_height);
+			map_values = make_int_map(map_width, map_height);
 			
 			//add ground to map_values
 			for (int i = 0; i < map_area; i++) {
 				//Convert char to integer value
 				map_values[i] = get_auto_tile_value(convert_letter_to_code(terrain_map[i]), i, terrain_map); 
-				//map_values[i] = convert_letter_to_code(terrain_map[i]);
+				map_values[i] = convert_letter_to_code(terrain_map[i]);
 			}
 			
 			//get map values (give 1 of trees)
@@ -63,24 +67,58 @@ public class RPG_Maker_Map {
 				map_values[i+map_area] = get_auto_tile_value(convert_letter_to_code(terrain_map[i]), i, terrain_map);
 			}
 			
+			//get map values (2: of structures)
+			terrain_map = flush_map(terrain_map);
+			terrain_map = make_test_map(2);
+			//add level level 1 above ground to map_values
+			for (int i = 0; i < map_area; i++){
+				if (map_values[i+map_area*2] == 0) {
+					map_values[i+map_area*2] = get_set_value(convert_letter_to_code(terrain_map[i]), i+map_area*2);
+				}
+			}
+			
 			//Write data section with map_values
 			writer.print("\n\"data\":[");
 			for (int i = 0; i < map_values.length; i++) {
 				writer.print(map_values[i]);
-				if (i+1 != map_values.length) {writer.print(',');	}
+				if (i+1 != map_values.length) {writer.print(',');}
 			} //skip the comma for the last entry
 			writer.print("],\n\"events\":[\n]\n}");
 			writer.close();
 		} catch (IOException e) {
 			//we got a problem; hasn't come up
 		}
+	}
+	
+	
+	/* a set behaves in a really predictable manner, to include a horizontal member x+1, vertical member y+1 
+	 * in a 1D array, an increase in y +1 = index + map_width
+	 * this function should fill out all of the map tiles associated with a set when the first member is called*/
+	int get_set_value( int base, int index){
+		for (int i = 0; i >= i + temp_set_width; i++) {
+			if (i+index < map_values.length) {map_values[i+index] = base + i;}
+			
+			/* this doesn't work and the problem is right here -- I think. 
+			 * What this should be doing is completing set placement:
+			 * after the first value is called the rest are filled out. 
+			 * Either that's not happening or something is writing over it.
+			 */
+			for (int j = 1; j >= temp_set_height +1; j++) {
+					map_values[i+index+(j*map_width)] = base + i + SET_ROW_LENGTH;
+			} 
+			//add a SAFETY -- this could write outside where it's supposed to (bottom row).
+			//alternatively, you could purge the space for the other objects? 
+		}
 		
+		return base;
 	}
 	
 	int convert_letter_to_code(char x){
 		if (x == 'w') {return 2048;}
 		if (x == 'g') {return 2816;}
 		if (x == 't') {return 3008;}
+		if (x == '!') {temp_set_width = 1; temp_set_height = 2; return 112;}
+		if (x == '!') {temp_set_width = 1; temp_set_height = 2; return 113;}
 		else return 0; 
 	}
 	
@@ -89,6 +127,13 @@ public class RPG_Maker_Map {
 		
 		char[] testMap = new char[map_area];
 		switch (c) {
+		case 2:
+			for (int i = 0; i < map_area; i++) {
+				testMap[i] = '0';
+				if (i%(map_width -2) == 0) {testMap[i] = '!';}
+				//else if (i%(map_width -4) == 0) {testMap[i] = '&';}
+				}
+			break;
 		case 1: 
 			for (int i = 0; i < map_area; i++) {
 				
@@ -98,7 +143,7 @@ public class RPG_Maker_Map {
 			break;
 		default: 
 			for (int i = 0; i < map_area; i++) {
-				//testMap[i] = 'g';
+				testMap[i] = 'g';
 				//if (i%6 == 0) {testMap[i] = 'w';}
 			}
 			break;
@@ -129,7 +174,7 @@ public class RPG_Maker_Map {
 	}
 	
 	//this gets the autotile value ; it may have a wrap effect in place?
-	//THIS WILL NOT WORK WITH C TILES (any non auto-tile)
+	//THIS WILL NOT WORK WITH Set_tiles
 	int get_auto_tile_value (int base, int index, char[] terrain) {
 		
 		if (terrain[index] == '0') {return 0;}
