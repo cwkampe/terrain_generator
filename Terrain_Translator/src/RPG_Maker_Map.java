@@ -16,6 +16,7 @@ public class RPG_Maker_Map {
 	int map_tileset_ID = 1;
 	int temp_set_length = 0;
 	int temp_set_width = 0;
+	int current_level = 0; //this value is used in place_set_tile; the value is manually changed prior to the function being called. 
 	
 	
 	public static RPG_Maker_Entry[] entries;
@@ -56,7 +57,6 @@ public class RPG_Maker_Map {
 			for (int i = 0; i < map_area; i++) {
 				//Convert char to integer value
 				map_values[i] = get_auto_tile_value(convert_letter_to_code(terrain_map[i]), i, terrain_map); 
-				map_values[i] = convert_letter_to_code(terrain_map[i]);
 			}
 			
 			//get map values (give 1 of trees) (LEVEL 1)
@@ -68,13 +68,25 @@ public class RPG_Maker_Map {
 			}
 			
 			//get map values (2: of structures) (LEVEL 2)
+			current_level = 2;
 			terrain_map = flush_map(terrain_map);
 			terrain_map = make_test_map(2);
-			//add level level 1 above ground to map_values
 			for (int i = 0; i < map_area; i++){
 				if (map_values[i+map_area*2] == 0) {
 					if (convert_letter_to_code(terrain_map[i]) != 0) {
 					place_set_value(convert_letter_to_code(terrain_map[i]), i+map_area*2);
+					}
+				}
+			}
+			
+			//get map values (3: of structures) (LEVEL 3)
+			current_level = 3; 
+			terrain_map = flush_map(terrain_map);
+			terrain_map = make_test_map(3);
+			for (int i = 0; i < map_area; i++){
+				if (map_values[i+map_area*3] == 0) {
+					if (convert_letter_to_code(terrain_map[i]) != 0) {
+					place_set_value(convert_letter_to_code(terrain_map[i]), i+map_area*3);
 					}
 				}
 			}
@@ -101,6 +113,7 @@ public class RPG_Maker_Map {
 		if (x == 't') {return 3008;}
 		if (x == '!') {temp_set_width = 1; temp_set_length = 2; return 112;}
 		if (x == 'c') {temp_set_width = 2; temp_set_length = 2; return 128;}
+		if (x == 'f') {temp_set_width = 1; temp_set_length = 1; return 303;}
 		else return 0; 
 	}
 	
@@ -110,6 +123,12 @@ public class RPG_Maker_Map {
 		
 		char[] testMap = new char[map_area];
 		switch (c) {
+		case 3:
+			for (int i = 0; i < map_area; i++) {
+				testMap[i] = '0';
+				if (i%19 == 0 && i != 0) {testMap[i] = 'f';}
+				}
+			break;		
 		case 2:
 			for (int i = 0; i < map_area; i++) {
 				testMap[i] = '0';
@@ -127,7 +146,7 @@ public class RPG_Maker_Map {
 		default: 
 			for (int i = 0; i < map_area; i++) {
 				testMap[i] = 'g';
-				//if (i%6 == 0) {testMap[i] = 'w';}
+				if (i%6 == 0) {testMap[i] = 'w';}
 			}
 			break;
 		}
@@ -148,7 +167,7 @@ public class RPG_Maker_Map {
 				temp_index = index + i + (j*map_width);
 				
 				//Prevents it from writing out of bounds UNIQUE TO LEVEL 2 ( hence "/3") 
-				if (temp_index/3 < map_width*map_height) {
+				if (temp_index/(current_level+1) < map_width*map_height) {
 					map_values[temp_index] = temp_set[i][j];
 				}
 			}
@@ -193,7 +212,7 @@ public class RPG_Maker_Map {
 	//THIS WILL NOT WORK WITH Set_tiles
 	int get_auto_tile_value (int base, int index, char[] terrain) {
 		
-		if (terrain[index] == '0') {return 0;}
+		if (terrain[index] == '0') {return 0;} //this prevents offset from being added to a blank tile
 		
 		int adjacent_squares = 8;
 		int temp_offset = 0;
