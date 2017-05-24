@@ -100,6 +100,14 @@ public class RPG_Maker_Map {
 				}
 			}
 			
+			/* LEVEL 4 is shadow; each square is divided into 4 sections
+			 * UL = 1, UR = 2, BL = 4, BR = 8.  
+			 * Compositions are additive in nature. For instance Top Side = 3 (1+2); Bottom Side = 12 (4+8); Full = 15. 
+			 */
+			
+			/* LEVEL 5 is encounter (values can be 1-255); */
+			
+			
 			//Write data section with map_values
 			writer.print("\n\"data\":[");
 			for (int i = 0; i < map_values.length; i++) {
