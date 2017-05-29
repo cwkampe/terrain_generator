@@ -1,5 +1,6 @@
 
 public class Disposition {
+	static int ERROR_CODE = 998;
 	String [] plant;
 	int [] value;
 	
@@ -18,7 +19,14 @@ public class Disposition {
 		return 0;
 	}
 	
-	void setValue(String p, int v) {
+	int report_disposition_towards(String plant_variety) {
+		for (int i = 0; i < plant.length; i++) {
+			if (plant[i] == plant_variety) {return value[i];}
+		}
+		return 0;
+	}
+	
+	void adjust_disposition(String p, int v) {
 		for (int i = 0; i < plant.length; i++) {
 			if (plant[i] == p) {
 				

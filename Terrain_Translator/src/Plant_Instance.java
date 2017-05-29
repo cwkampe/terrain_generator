@@ -8,7 +8,7 @@ public class Plant_Instance {
 	int [] neighboring_tiles = new int [8];
 	int [] desirability_of_neighbors = new int [8];
 	
-	void calculate_desirability_of_neighbors(Area_Tile[] current_map, Plant current_plant) {
+	void calculate_desirability_of_neighbors(Area_Tile[] current_map) {
 		for (int i = 0; i < neighboring_tiles.length; i++) {
 			
 			//check for neighbors that are out of bounds
@@ -20,11 +20,13 @@ public class Plant_Instance {
 		}
 	}
 	
-	void initialize(String name, int location, Area_Tile[] current_map, int map_width) {
+	void initialize(String name, int location, Area_Tile[] current_map) {
 		age = 1;
 		myVariety = name;
 		myLocation = location;
-		neighboring_tiles = current_map[location].
-		//desire_to_hold = plant.
+		neighboring_tiles = current_map[location].identify_adjacent_tiles();
+		
+		//calculate desire to hold
+		calculate_desirability_of_neighbors(current_map);
 	}
 }
