@@ -5,8 +5,8 @@ public class Vegetation_Controls {
 	
 	//Test Values
 	int test_slope = 0;
-	int test_hydration;
-	int test_elevation;
+	int test_hydration = 50;
+	int test_elevation = 100;
 	int test_vegetation_density = 50;
 	
 	int absolute_plant_population;
@@ -21,7 +21,6 @@ public class Vegetation_Controls {
 	char[] plant_area_tile_map;
 	
 	Plant_Entry[] area_populations = new Plant_Entry [NUMBER_OF_PLANT_VARIETIES];
-	Plant_Instance[][] plants_in_area;
 	
 	Vegetation_Controls() { 
 		}
@@ -39,7 +38,7 @@ public class Vegetation_Controls {
 			//skip none or dead plants
 			
 			area_populations[i].myVariety = Plant.Plant_list[i].name;
-			area_populations[i].desire_score = Plant.Plant_list[i].calculate_area_desirability(test_elevation, test_hydration);
+			area_populations[i].desire_score = Plant.Plant_list[i].calculate_area_desirability(test_elevation, test_hydration, test_slope);
 			temp_sum += area_populations[i].getDesire();
 		}
 		
@@ -112,6 +111,8 @@ public class Vegetation_Controls {
 	boolean check_applicability(Area_Tile tile, String plant_variety) {
 		if (tile.supports_land_vegetation != Plant.Plant_list[Plant.get_index(plant_variety)].is_land_plant) {return false;}
 		if (tile.supports_water_vegetation != Plant.Plant_list[Plant.get_index(plant_variety)].is_water_plant) {return false;}
+		
+		//the area is applicable if there's a dead plant there. CHANGE NEEDED
 		if (tile.has_plant == true) {return false;}
 		if (Plant.Plant_list[Plant.get_index(plant_variety)].calculate_tile_desirability(tile, plant_variety) >= min_desirability) {return false;}
 		

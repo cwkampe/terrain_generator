@@ -3,10 +3,6 @@ import java.io.IOException;
 import java.util.List;
 import com.opencsv.CSVReader;
 
-/*
- * DESIRABILITY needs to become a float. It currently handles fractions which wont work as int unless you do a work around.
- */
-
 public class Plant {
 	static int NUMBER_OF_PLANT_ELEMENTS = 15; //this is the number of plant elements expressed in CSV columns
 	static int NUMBER_OF_PLANT_VARIETIES;
@@ -14,13 +10,17 @@ public class Plant {
 	static int ERROR_CODE_NO_PLANT = 0; // the first plant has to be NO_PLANT
 	static int ERROR_CODE = 999;
 	static char ERROR_CHAR = '!';
+	static int MAP_LIMIT_HIGHEST = 5000; //meters
+	static int MAP_LIMIT_LOWEST = -1000;
+	static int MAP_LIMIT_DRY = 0;
+	static int MAP_LIMIT_WET = 100;
+	static int MAP_LIMIT_SLOPE = 80;
+	
 
 	
 	String name;
 	char map_code;
-	
-	boolean is_land_plant;
-	boolean is_water_plant;
+	char suitable_terrain; 
 	
 	int ideal_elevation;
 	int ideal_hydration;
@@ -78,8 +78,7 @@ public class Plant {
 		     if (lineNumber != 0) { //skip the first line because it is column headings 
 		    	Plant_list[(lineNumber-1)].name = nextLine[1];
 		    	Plant_list[(lineNumber-1)].map_code = nextLine[2].charAt(0);
-		    	if (nextLine[3].charAt(0) == 'l') {Plant_list[(lineNumber-1)].is_land_plant = true;}
-		    	else if (nextLine[3].charAt(0) == 'w') {Plant_list[(lineNumber-1)].is_water_plant = true;}
+		    	Plant_list[lineNumber - 1].suitable_terrain = (nextLine[3].charAt(0));
 		    	Plant_list[(lineNumber-1)].ideal_elevation = Integer.parseInt(nextLine[4]);
 		    	Plant_list[(lineNumber-1)].ideal_hydration = Integer.parseInt(nextLine[5]);
 		    	Plant_list[(lineNumber-1)].tolerance_elevation = Integer.parseInt(nextLine[6]);
@@ -103,8 +102,7 @@ public class Plant {
 	void initialize() {
 		name = "";
 		map_code = 0;
-		is_land_plant = false;
-		is_water_plant = false;
+		suitable_terrain = '0';
 		ideal_elevation = 0;
 		ideal_hydration = 0;
 		propegation_range =0;
@@ -112,18 +110,7 @@ public class Plant {
 		life_span = 0;
 	}
 	
-	//used to calculate general desirability (relative to the current plant) for a map region (not tile based). 
-	float calculate_area_desirability(int area_elevation, int area_hydration) {
-		float desirability = 1;
-		float x;
-		
-		x = Math.abs(ideal_elevation - area_elevation);
-		desirability -= x/tolerance_elevation;
-		x = Math.abs(ideal_hydration - area_hydration);
-		desirability -= x/tolerance_hydration;
-		
-		return desirability; 
-	}
+
 	
 	
 	///NEEEDS FLOAT FIX!!!! I THINK THIS IS REALLY BROKEN RIGHT NOW, IT USED TO CHECK AGAINST THE PLANT TEMPLATES
@@ -132,9 +119,9 @@ public class Plant {
 		float desirability = 1;
 		float x = 0;
 		
-		if (is_land_plant != place.supports_land_vegetation && is_water_plant != place.supports_water_vegetation) { 
-			return 0; //total undesirability;
-		}
+		//check for land/water mismatch; future versions might include rock. 
+		if (Plant.get_plant(plant_variety).suitable_terrain != place.suitability_code) {return 0 ;};
+		
 		
 		x = Math.abs(ideal_hydration - place.hydration_value);
 		desirability -= x/tolerance_hydration;
@@ -163,5 +150,46 @@ public class Plant {
 		}
 		return false; 
 	}
-}
 	
+	//used to calculate general desirability (relative to the current plant) for a map region (not tile based). 
+	float calculate_area_desirability(int area_elevation, int area_hydration, int area_slope) {
+		
+		float x = get_hydration_desirability(area_hydration);
+		float y = get_elevation_desirability(area_elevation, area_slope);
+		
+		return (x + y);
+	}
+	
+	//returns a value between 0.0 - 1.0
+	float get_hydration_desirability (int area_hydration) {
+		
+		int absolute_difference = (Math.abs((MAP_LIMIT_DRY - MAP_LIMIT_WET)));
+		float x = Math.abs((ideal_hydration - area_hydration));
+		if (x < tolerance_hydration) {x= 0;}
+		else x = Math.abs(x - tolerance_hydration);
+		
+		float desirability = 1 - (x/absolute_difference); 
+		
+		return desirability;
+	}
+	float get_elevation_desirability (int area_elevation, int area_slope) {
+		int absolute_difference = (Math.abs((MAP_LIMIT_LOWEST - MAP_LIMIT_HIGHEST)));
+		
+		float x = Math.abs((ideal_elevation - area_elevation));
+		if (x < tolerance_elevation) {x= 0;}
+		else x = Math.abs(x - tolerance_hydration);
+		
+		float slope_resistance = (ideal_elevation + tolerance_elevation)/absolute_difference;
+		if (slope_resistance > MAP_LIMIT_SLOPE) {slope_resistance = MAP_LIMIT_SLOPE;}
+		
+		float y = (area_slope - slope_resistance);
+		if (y < 0) { y = 0;}
+		
+		float desirability = 1 - (x/absolute_difference) - (y/MAP_LIMIT_SLOPE); 
+		
+		return desirability;
+	}
+		
+}
+
+
