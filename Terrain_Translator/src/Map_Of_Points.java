@@ -32,9 +32,11 @@ public class Map_Of_Points {
 	}
 	
 	void initialize(Map_Point[][] Generated) {
+		resetValues();
 		setPoints(Generated);
-		calculateTopographicFeatures();
+		setTerrain();
 		calculateTileNumbers(); //also assigns terrain_type to each Map_Point
+		calculateTopographicFeatures();
 	}
 	
 	void setPoints(Map_Point[][] Generated) {
@@ -49,55 +51,105 @@ public class Map_Of_Points {
 			}
 		}
 	}
+	
+	void setTerrain() {
+		setTerrainType('r');
+		setTerrainType('x');
+		setTerrainType('w');
+		setTerrainType('m');
+		setTerrainType('g');
+		setTerrainType('d');
+	}
+	
+	/****************!!!!!!!!!!!! DO ME****************/
 	void calculateTopographicFeatures() {
 		
 	}
 	
-	void calculateTileNumbers() {
-		num_tiles = width * length;
-		num_water_tiles_shallow = calculateNumberByThreshold('w');
-		num_water_tiles_deep = calculateNumberByThreshold('x');
-		num_water_tiles = num_water_tiles_shallow + num_water_tiles_deep;
-		num_land_tiles_marsh = calculateNumberByThreshold('m');
-		num_land_tiles_dirt = calculateNumberByThreshold('d');
-		num_land_tiles_grass = calculateNumberByThreshold('g');
-		num_land_tiles_rock = calculateNumberByThreshold('r');
-		num_land_tiles = num_land_tiles_marsh + num_land_tiles_dirt + num_land_tiles_grass + num_land_tiles_rock;
-		//Check to make sure num_tiles == (num_land_tiles + num_water_tiles)
+	int [] getArrayForValue (char key) {
+		
+		int [] temp_array = null;
+		
+		switch (key) {
+		case 'a':
+			temp_array = new int [num_land_tiles];
+			break;
+		case 'h':
+			temp_array = new int [num_land_tiles];
+			break;
+		default:
+				break;
+		}
+		
+		int temp_index = 0;
+		switch (key) {
+		case 'a':
+			for (int i = 0; i < Local_Map.length; i++) {
+				for (int j = 0; j < Local_Map[0].length; j++) {
+						if (Local_Map[i][j].hydration < threshold_water) {
+							temp_array[temp_index] = Local_Map[i][j].altitude;
+							temp_index++;
+						}
+					}
+				}
+			break;
+		case 'h':
+			for (int i = 0; i < Local_Map.length; i++) {
+				for (int j = 0; j < Local_Map[0].length; j++) {
+						if (Local_Map[i][j].hydration < threshold_water) {
+							temp_array[temp_index] = Local_Map[i][j].hydration;
+							temp_index++;
+						}
+					}
+				}
+			break;
+		default:
+			break;
+		
+		}
+		return temp_array;
 	}
 	
-	//this function returns a number and assigns a tile code to each map point included in the tally. 
-	int calculateNumberByThreshold (char key) {
-		int tally = 0;
-		int temp = 0; 
+	double calculateMean(int [] value) {
+		double temp = 0; 
+		for (int i = 0; i < value.length; i++) {
+			temp += (double)value[i]; 
+		}
+		return temp/value.length;
+	}
+	
+	/* function taken from https://stackoverflow.com/questions/18390548/how-to-calculate-standard-deviation-using-java */
+	double calculateSD(int [] value) {
+		
+		double powerSum1 = 0;
+		double powerSum2 = 0;
+		double stdev = 0;
+		
+		for (int i = 0; i < value.length; i++) {
+			powerSum1 += (double) value[i];
+			powerSum2 += Math.pow((double)value[i], 2);
+			stdev += Math.sqrt((double)(i*powerSum2 - Math.pow(powerSum1, 2)))/i;
+		}
+		
+		return stdev;
+	}
+	
+	void calculateTileNumbers() {
+		num_tiles = width * length;
 		for (int i = 0; i < length; i++) {
 			for (int j = 0; j < width; j++){
-				switch (key) {
-				case 'r':
-					//calculate rocks from slope
-					temp = Local_Map[i][j].slopeZX + Local_Map[i][j].slopeZY; 
-					if (passedThreshold(key, temp)) {tally++; Local_Map[i][j].setTerrainType(key);}
-					temp = 0;
+				switch (Local_Map[i][j].terrain_type) {
+				case 'r': num_land_tiles_rock++;
 					break;
-				case 'g':
-					//calculate grass tiles
-					if (passedThreshold(key, Local_Map[i][j].hydration)) {tally++; Local_Map[i][j].setTerrainType(key);}
+				case 'g': num_land_tiles_grass++;
 					break;
-				case 'd':
-					//calculate dirt tiles
-					if (passedThreshold(key, Local_Map[i][j].hydration)) {tally++; Local_Map[i][j].setTerrainType(key);}
+				case 'd': num_land_tiles_dirt++;
 					break;
-				case 'm':
-					//calculate marsh tiles;
-					if (passedThreshold(key, Local_Map[i][j].hydration)) {tally++; Local_Map[i][j].setTerrainType(key);}
+				case 'm': num_land_tiles_marsh++;
 					break;
-				case 'w':
-					//calculate shallow water tiles
-					if (passedThreshold(key, Local_Map[i][j].hydration)) {tally++; Local_Map[i][j].setTerrainType(key);}
+				case 'w': num_water_tiles_shallow++;
 					break;
-				case 'x':
-					//calculate deep water tiles
-					if (passedThreshold(key, Local_Map[i][j].hydration)) {tally++; Local_Map[i][j].setTerrainType(key);}
+				case 'x': num_water_tiles_deep++;
 					break;
 				default:
 					//flag as problem BAD INPUT
@@ -105,7 +157,51 @@ public class Map_Of_Points {
 				}
 			}
 		}
-		return tally;
+		num_water_tiles = num_water_tiles_shallow + num_water_tiles_deep;
+		num_land_tiles = num_land_tiles_marsh + num_land_tiles_dirt + num_land_tiles_grass + num_land_tiles_rock;
+		//Check to make sure num_tiles == (num_land_tiles + num_water_tiles)
+	}
+	
+	//this function assigns a tile code to each map point based on threshold values. 
+	void setTerrainType (char key) {
+		int temp = 0; 
+		for (int i = 0; i < length; i++) {
+			for (int j = 0; j < width; j++){
+				switch (key) {
+				case 'r':
+					//calculate rocks from slope
+					temp = Local_Map[i][j].slopeZX + Local_Map[i][j].slopeZY; 
+					if (passedThreshold(key, temp)) {Local_Map[i][j].setTerrainType(key);}
+					temp = 0;
+					break;
+				case 'g':
+					//calculate grass tiles
+					if (Local_Map[i][j].terrain_type == 'r') break;
+					if (passedThreshold(key, Local_Map[i][j].hydration)) {Local_Map[i][j].setTerrainType(key);}
+					break;
+				case 'd':
+					//calculate dirt tiles
+					if (Local_Map[i][j].terrain_type == 'r') break;
+					if (passedThreshold(key, Local_Map[i][j].hydration)) {Local_Map[i][j].setTerrainType(key);}
+					break;
+				case 'm':
+					//calculate marsh tiles;
+					if (passedThreshold(key, Local_Map[i][j].hydration)) {Local_Map[i][j].setTerrainType(key);}
+					break;
+				case 'w':
+					//calculate shallow water tiles
+					if (passedThreshold(key, Local_Map[i][j].hydration)) {Local_Map[i][j].setTerrainType(key);}
+					break;
+				case 'x':
+					//calculate deep water tiles
+					if (passedThreshold(key, Local_Map[i][j].hydration)) {Local_Map[i][j].setTerrainType(key);}
+					break;
+				default:
+					//flag as problem BAD INPUT
+					break;
+				}
+			}
+		}
 	}
 		
 	boolean passedThreshold(char key, int value) {
@@ -139,6 +235,24 @@ public class Map_Of_Points {
 			return false;
 		}
 		return false;
+	}
+	
+	void resetValues() {
+		length = 0;
+		width = 0;
+		mean_altitude = 0;
+		mean_land_hydration = 0;
+		stdv_altitude = 0;
+		stdv_land_hydration = 0;
+		num_tiles = 0;
+		num_water_tiles = 0;
+		num_water_tiles_shallow = 0;
+		num_water_tiles_deep = 0;
+		num_land_tiles = 0;
+		num_land_tiles_dirt = 0;
+		num_land_tiles_grass = 0;
+		num_land_tiles_rock = 0;
+		num_land_tiles_marsh = 0;
 	}
 	
 }
