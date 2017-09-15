@@ -10,12 +10,13 @@ public class Map_Of_Points {
 	
 	Map_Point [][] Local_Map;
 	
+	String region_name;
 	int length;
 	int width;
-	int mean_altitude;
-	int mean_land_hydration;
-	int stdv_altitude;
-	int stdv_land_hydration;
+	double mean_altitude;
+	double mean_land_hydration;
+	double stdv_altitude;
+	double stdv_land_hydration;
 	int num_tiles;
 	int num_water_tiles;
 	int num_water_tiles_shallow;
@@ -33,23 +34,30 @@ public class Map_Of_Points {
 	
 	void initialize(Map_Point[][] Generated) {
 		resetValues();
+		MapReader Map_Data = new MapReader("filename");
+		
+		region_name = Map_Data.name();
+		length = Map_Data.height();
+		width = Map_Data.width();
+		
+		Local_Map = new Map_Point[length][width];
+		
+		for (int i = 0; i < length; i++) {
+			for (int j = 0; j < width; j++){
+				Local_Map[i][j].setValue('a', (int) Map_Data.altitude(i, j));
+				Local_Map[i][j].setValue('r', (int) Map_Data.rainfall(i, j));
+				Local_Map[i][j].setValue('h', (int) Map_Data.hydration(i, j));
+				Local_Map[i][j].setValue('x', (int) Map_Data.dZdX(i, j));
+				Local_Map[i][j].setValue('y', (int) Map_Data.dZdY(i, j));
+				Local_Map[i][j].setValue('a', (int) Map_Data.altitude(i, j));
+				setAllValues(Generated[i][j]);
+			}
+		}
+		
 		setPoints(Generated);
 		setTerrain();
 		calculateTileNumbers(); //also assigns terrain_type to each Map_Point
 		calculateTopographicFeatures();
-	}
-	
-	void setPoints(Map_Point[][] Generated) {
-		
-		width = Generated[0].length;
-		length = Generated.length;
-		
-		Local_Map = new Map_Point[length][width];
-		for (int i = 0; i < length; i++) {
-			for (int j = 0; j < width; j++){
-				Local_Map[i][j].setAllValues(Generated[i][j]);
-			}
-		}
 	}
 	
 	void setTerrain() {
@@ -63,7 +71,13 @@ public class Map_Of_Points {
 	
 	/****************!!!!!!!!!!!! DO ME****************/
 	void calculateTopographicFeatures() {
-		
+		int [] land_altitude_values = getArrayForValue('a');
+		int [] land_hydration_values = getArrayForValue('h');
+		//add land tiles? 
+		mean_altitude = calculateMean(land_altitude_values);
+		mean_land_hydration = calculateMean(land_hydration_values);
+		stdv_altitude = calculateSD(land_altitude_values); 
+		stdv_land_hydration = calculateSD(land_hydration_values);
 	}
 	
 	int [] getArrayForValue (char key) {

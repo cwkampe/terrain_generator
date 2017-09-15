@@ -5,7 +5,17 @@ public class Map_Point {
 	int slopeZY;
 	int rainfall;
 	int hydration;
-	String soil_type;
+	MapReader.SoilType soil;
+	MapReader.CompassDirection face;
+	
+	public enum TerrainType {
+		UNKNOWN, WATER_SHALLOW, WATER_NORMAL, WATER_DEEP, LAND_SAND, LAND_DIRT, LAND_GRASS, LAND_MARSH, LAND_ROCK
+	};
+	
+	public enum TileAspect {
+		ALTITUDE, SLOPE_ZX, SLOPE_ZY, RAINFALL, HYDRATION, SOIL, FACE
+	};
+	
 	char terrain_type;
 	
 	Map_Point() {}
@@ -49,8 +59,14 @@ public class Map_Point {
 				break;
 		}
 	}
-	void setValue(char key, String value) {
-		soil_type = value;
+	
+	
+	void setSoil (enum SoilType current) {
+		soil_type
+	}
+	
+	void setFace (enum CompassDirection current) {
+		
 	}
 	
 	void setTerrainType(char key) {
